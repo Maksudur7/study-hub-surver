@@ -30,6 +30,7 @@ async function run() {
         await client.connect();
 
         const addNewClassesCollection = client.db("studentHub").collection("studentHub");
+        const addNewTranslationCollection = client.db("studentHub").collection("addTranslation");
 
         app.post("/studentHub", async (req, res) => {
             const newClass = req.body;
@@ -37,9 +38,29 @@ async function run() {
             res.status(201).json(result);
         });
 
+
         app.get("/studentHub", async (req, res) => {
             const result = await addNewClassesCollection.find().toArray();
             res.json(result);
+        });
+
+        app.post("/addTranslation", async (req, res) => {
+            try {
+                const newTranslation = req.body
+                const result = await addNewTranslationCollection.insertOne(newTranslation);
+                res.status(201).json(result);
+            } catch (err) {
+                res.status(500).json({ error: "Database insert failed" });
+            }
+        });
+
+        app.get("/addTranslation", async (req, res) => {
+            try {
+                const result = await addNewTranslationCollection.find().toArray();
+                res.json(result);
+            } catch (err) {
+                res.status(500).json({ error: "Database query failed" });
+            }
         });
 
         app.get("/", (req, res) => {
