@@ -1,7 +1,10 @@
 import express from "express";
 import cors from "cors";
+import OpenAI from "openai";
+import dotenv from "dotenv"
 import { MongoClient, ServerApiVersion } from "mongodb";
 
+dotenv.config();
 const app = express();
 const PORT = 5000;
 
@@ -22,6 +25,10 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+})
 
 let quizDataCollection;
 let studentHubCollection;
@@ -87,9 +94,47 @@ app.post("/quizData", async (req, res) => {
 });
 
 app.get("/quizData", async (req, res) => {
-    const result = await quizDataCollection.find().toArray();
+    const result = await quizDataCollection.find().sort({ createdAt: -1 }).toArray();
     res.json(result);
 });
+
+app.post("/generate-quiz", async (req, res) => {
+    const { subject, chapters } = req.body;
+    console.log("Subject and chapter is heare", subject, chapters);
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a quiz generator. Return only JSON"
+                },
+                {
+                    role: "user",
+                    content: `Generate 10 multiple-choice questions from ${subject}, chapters: ${chapters}. 
+          Each question should have 4 options and one correct answer.
+          Return in JSON format like this:
+          [
+            {"question": "...", "options":["A","B","C","D"], "answer": "B"}
+          ]`
+                }
+            ]
+        });
+
+        console.log("Response is heare", response);
+
+        let quiz = response.choices[0].message.content;
+        console.log("Quiz is heare", quiz);
+        quiz = quiz.replace(/```json/g, "").replace(/```/g, "").trim();
+        res.json(JSON.parse(quiz));
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ err: "Failed to generate quiz" });
+    }
+});
+
+
+
 
 app.get("/", (req, res) => {
     res.send("StudentHub server is running!");
