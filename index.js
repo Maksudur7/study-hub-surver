@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import dotenv from "dotenv"
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 
 dotenv.config();
 const app = express();
@@ -11,7 +11,7 @@ const PORT = 5000;
 
 app.use(cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }));
 app.use(express.json());
 
@@ -97,6 +97,26 @@ app.get("/quizData", async (req, res) => {
     const result = await quizDataCollection.find().sort({ createdAt: -1 }).toArray();
     res.json(result);
 });
+
+app.delete('/quizData/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await quizDataCollection.deleteOne(filter);
+    res.json(result)
+})
+
+app.patch('/quizData/:id', async (req, res) => {
+    try {
+        const filter = { _id: new ObjectId(req.params.id) };
+        const updateDoc = { $set: req.body };
+        const result = await quizDataCollection.updateOne(filter, updateDoc);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: "Update failed", details: err.message });
+    }
+});
+
+
 
 app.post("/generate-quiz", async (req, res) => {
     const { subject, chapters } = req.body;
