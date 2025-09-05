@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import dotenv from "dotenv"
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 
+
 dotenv.config();
 const app = express();
 const PORT = 5000;
@@ -16,8 +17,9 @@ app.use(cors({
 app.use(express.json());
 
 
-const uri = "mongodb+srv://maksudurrahamanmishu7_db_user:WsjWoiktLwTSXjE6@cluster0.b3nlp4l.mongodb.net/studentHub?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://maksudurrahamanmishu7_db_user:WsjWoiktLwTSXjE6@cluster0.b3nlp4l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -26,29 +28,39 @@ const client = new MongoClient(uri, {
     }
 });
 
-const openai = new OpenAI({
-    // apiKey: process.env.OPENAI_API_KEY
-})
-
-let quizDataCollection;
-let studentHubCollection;
-let addTranslationCollection;
-
 async function run() {
     try {
+        // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const db = client.db("studentHub");
 
         studentHubCollection = db.collection("studentHub");
         addTranslationCollection = db.collection("addTranslation");
         quizDataCollection = db.collection("quizData");
-
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
         console.log("MongoDB connected and collections initialized!");
-    } catch (err) {
+    } finally {
+        // Ensures that the client will close when you finish/error
         console.error("MongoDB connection failed:", err);
+        await client.close();
     }
 }
-run();
+run().catch(console.dir);
+
+
+
+
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+})
+
+let quizDataCollection;
+let studentHubCollection;
+let addTranslationCollection;
+
+
 
 
 app.post("/studentHub", async (req, res) => {
