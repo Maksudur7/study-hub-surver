@@ -28,6 +28,16 @@ const client = new MongoClient(uri, {
     }
 });
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+})
+
+let quizDataCollection;
+let studentHubCollection;
+let addTranslationCollection;
+let addTaskCollection;
+let addGoleCollection;
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -37,29 +47,18 @@ async function run() {
         studentHubCollection = db.collection("studentHub");
         addTranslationCollection = db.collection("addTranslation");
         quizDataCollection = db.collection("quizData");
+        addTaskCollection = db.collection("addTask");
+        addGoleCollection = db.collection("addGole");
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
         console.log("MongoDB connected and collections initialized!");
-    } finally {
+    } catch (err) {
         // Ensures that the client will close when you finish/error
-        console.error("MongoDB connection failed:", err);
-        await client.close();
+        // console.error("MongoDB connection failed:", err);
+        console.log('backend data error is ', err);
     }
 }
 run().catch(console.dir);
-
-
-
-
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-})
-
-let quizDataCollection;
-let studentHubCollection;
-let addTranslationCollection;
-
 
 
 
@@ -128,6 +127,62 @@ app.patch('/quizData/:id', async (req, res) => {
     }
 });
 
+app.post('/addTask', async (req, res) => {
+    try {
+        console.log(req.body);
+        const result = await addTaskCollection.insertOne(req.body)
+        console.log('the result is ', result);
+        res.status(201).json(result)
+    } catch (err) {
+        res.status(500).json({ error: "Insert failed" });
+    }
+})
+
+app.get('/addTask', async (req, res) => {
+    const result = await addTaskCollection.find().toArray()
+    res.json(result)
+})
+
+app.delete('/addTask/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await addTaskCollection.deleteOne(filter);
+    res.json(result)
+})
+
+app.patch('/addTask/:id', async (req, res) => {
+    try {
+        const filter = { _id: new ObjectId(req.params.id) };
+        const updateDoc = { $set: req.body };
+        const result = await addTaskCollection.updateOne(filter, updateDoc);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: "Update failed", details: err.message });
+    }
+});
+
+app.post('/addGole', async (req, res) => {
+    try {
+        console.log(req.body);
+        const result = await addGoleCollection.insertOne(req.body)
+        console.log('the result is ', result);
+        res.status(201).json(result)
+    } catch (err) {
+        res.status(500).json({ error: "Insert failed" });
+    }
+})
+
+app.get('/addGole', async (req, res) => {
+    const result = await addGoleCollection.find().toArray()
+    res.json(result)
+})
+
+app.delete('/addGole/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await addGoleCollection.deleteOne(filter);
+    res.json(result)
+})
 
 
 app.post("/generate-quiz", async (req, res) => {
@@ -164,7 +219,7 @@ app.post("/generate-quiz", async (req, res) => {
         res.status(500).json({ err: "Failed to generate quiz" });
     }
 });
- //fixt bug
+//fixt bug
 
 
 
