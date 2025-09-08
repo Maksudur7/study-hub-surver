@@ -9,7 +9,10 @@ const PORT = process.env.PORT || 5000;
 
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: [
+        "http://localhost:5173",
+        "https://study-plan-backend-beta.vercel.app"
+    ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }));
 app.use(express.json());
@@ -18,7 +21,7 @@ const userName = process.env.DB_NAME
 const password = process.env.DB_PASSWORD
 
 
-const uri = `mongodb+srv://${userName}:${password}@cluster0.b3nlp4l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${userName}:${password}@cluster0.b3nlp4l.mongodb.net/`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -68,6 +71,11 @@ async function run() {
             res.json(result);
         });
 
+        app.get("/addTranslation", async (req, res) => {
+            const result = await addTranslationCollection.find().toArray();
+            res.json(result);
+        });
+
         app.post("/addTranslation", async (req, res) => {
             try {
                 const result = await addTranslationCollection.insertOne(req.body);
@@ -75,11 +83,6 @@ async function run() {
             } catch (err) {
                 res.status(500).json({ error: "Insert failed" });
             }
-        });
-
-        app.get("/addTranslation", async (req, res) => {
-            const result = await addTranslationCollection.find().toArray();
-            res.json(result);
         });
 
         app.post("/quizData", async (req, res) => {
@@ -212,6 +215,14 @@ async function run() {
             }
         });
 
+        app.get("/", (req, res) => {
+            res.send("StudentHub server is running!");
+        });
+
+        app.listen(PORT, () => {
+            console.log(`Server running at http://localhost:${PORT}`);
+        });
+
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
         console.log("MongoDB connected and collections initialized!");
@@ -224,10 +235,4 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get("/", (req, res) => {
-    res.send("StudentHub server is running!");
-});
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
