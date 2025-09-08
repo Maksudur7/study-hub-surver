@@ -3,12 +3,8 @@ import cors from "cors";
 import OpenAI from "openai";
 import dotenv from "dotenv"
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
-
-
-
 dotenv.config();
 const app = express();
-// const PORT = 5000;
 const PORT = process.env.PORT || 5000;
 
 
